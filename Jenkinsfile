@@ -14,6 +14,12 @@ pipeline {
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
 	// JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
     }
+    options {
+      retry(1)
+      buildDiscarder(logRotator(numToKeepStr: '3'))
+      timeout(time: 10, unit: 'MINUTES') 
+    }
+    
     stages {
         stage('clean workspace') {
             steps {
@@ -88,8 +94,26 @@ pipeline {
      }
      post {
         always {
+           def jobName = env.JOB_NAME
+           def buildNumber = env.BUILD_NUMBER
+           def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
+           def bannerColor = pipelineStatus.toUpperCase() == 'SUCCESS' ? 'green' : 'red'
+
+           def body = """
+                <html>
+                <body>
+                <div style="border: 4px solid ${bannerColor}; padding: 10px;">
+                <h2>${jobName} - Build ${buildNumber}</h2>
+                <div style="background-color: ${bannerColor}; padding: 10px;">
+                <h3 style="color: white;">Pipeline Status: ${pipelineStatus.toUpperCase()}</h3>
+                </div>
+                <p>Check the <a href="${BUILD_URL}">console output</a>.</p>
+                </div>
+                </body>
+                </html>
+            """
            emailext attachLog: true,
-               subject: "'${currentBuild.result}'",
+               subject: "${jobName} - Build ${buildNumber} - ${pipelineStatus.toUpperCase()}",
                body: "Project: ${env.JOB_NAME}<br/>" +
                    "Build Number: ${env.BUILD_NUMBER}<br/>" +
                    "URL: ${env.BUILD_URL}<br/>",
