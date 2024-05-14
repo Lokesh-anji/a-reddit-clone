@@ -94,6 +94,7 @@ pipeline {
      }
      post {
         always {
+	  script {
            def jobName = env.JOB_NAME
            def buildNumber = env.BUILD_NUMBER
            def pipelineStatus = currentBuild.result ?: 'UNKNOWN'
@@ -120,6 +121,7 @@ pipeline {
                to: 'lokeshanji1994@gmail.com',                              
                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
         }
+	}
      }
     
 }
